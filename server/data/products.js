@@ -35,4 +35,4 @@ const generateProducts = (count = 50) => {
     return products;
 };
 
-export default generateProducts ;
+export { generateProducts } ;

@@ -2,6 +2,7 @@
   "name": "ecommerce-server",
   "version": "1.0.0",
   "description": "Backend for the MERN E-commerce App",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

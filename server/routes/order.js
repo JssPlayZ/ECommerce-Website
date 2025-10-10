@@ -1,60 +1,48 @@
-const express = require('express');
-const router = express.Router();
-const Order = require('../models/Order');
-const Cart = require('../models/Cart');
-const { protect } = require('../middleware/authMiddleware');
+import express from 'express';
+import asyncHandler from 'express-async-handler';
+import { protect } from '../middleware/authMiddleware.js';
+import Order from '../models/Order.js';
+import Cart from '../models/Cart.js';
 
-// @desc    Create a new order from the cart
+const router = express.Router();
+
+// @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
-router.post('/', protect, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const cart = await Cart.findOne({ user: userId });
+router.post('/', protect, asyncHandler(async (req, res) => {
+    const cart = await Cart.findOne({ user: req.user._id });
 
-        if (!cart || cart.items.length === 0) {
-            return res.status(400).json({ message: 'Cannot create order from an empty cart' });
-        }
-        
-        const totalPrice = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
+    if (cart && cart.items.length > 0) {
         const order = new Order({
-            user: userId,
+            user: req.user._id,
             products: cart.items.map(item => ({
                 productId: item.productId,
                 title: item.title,
-                price: item.price,
                 image: item.image,
-                quantity: item.quantity,
+                price: item.price,
+                quantity: item.quantity
             })),
-            totalPrice: totalPrice
+            totalPrice: cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0),
         });
 
         const createdOrder = await order.save();
         
         // Clear the user's cart after creating the order
-        cart.items = [];
-        await cart.save();
+        await Cart.deleteOne({ _id: cart._id });
 
         res.status(201).json(createdOrder);
-
-    } catch (error) {
-        console.error('Error creating order:', error.message);
-        res.status(500).json({ message: 'Server Error' });
+    } else {
+        res.status(400);
+        throw new Error('No items in cart');
     }
-});
+}));
 
-// @desc    Get logged in user's orders
+// @desc    Get logged in user orders
 // @route   GET /api/orders
 // @access  Private
-router.get('/', protect, async (req, res) => {
-    try {
-        const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 }); // Show newest first
-        res.json(orders);
-    } catch (error) {
-        console.error('Error fetching orders:', error.message);
-        res.status(500).json({ message: 'Server Error' });
-    }
-});
+router.get('/', protect, asyncHandler(async (req, res) => {
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(orders);
+}));
 
-module.exports = router;
+export default router;

@@ -5,9 +5,6 @@ import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-// @desc    Auth user & get token (Login)
-// @route   POST /api/auth/login
-// @access  Public
 router.post('/login', asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -17,10 +14,8 @@ router.post('/login', asyncHandler(async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
-            createdAt: user.createdAt,
-            token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-                expiresIn: '30d',
-            }),
+            isAdmin: user.isAdmin,
+            token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' }),
         });
     } else {
         res.status(401);
@@ -28,34 +23,21 @@ router.post('/login', asyncHandler(async (req, res) => {
     }
 }));
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
 router.post('/register', asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
-
     const userExists = await User.findOne({ email });
-
     if (userExists) {
         res.status(400);
-        throw new Error('User with this email already exists');
+        throw new Error('User already exists');
     }
-
-    const user = await User.create({
-        name,
-        email,
-        password,
-    });
-
+    const user = await User.create({ name, email, password });
     if (user) {
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            createdAt: user.createdAt,
-            token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-                expiresIn: '30d',
-            }),
+            isAdmin: user.isAdmin,
+            token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' }),
         });
     } else {
         res.status(400);

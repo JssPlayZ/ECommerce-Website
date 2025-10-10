@@ -1,41 +1,32 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import generateProducts from './data/products.js';
+import users from './data/users.js';
+import { generateProducts } from './data/products.js';
 import User from './models/User.js';
 import Product from './models/Product.js';
-import Cart from './models/Cart.js';
-import Order from './models/Order.js';
+import connectDB from './config/db.js';
 
 dotenv.config();
-
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('MongoDB Connected...');
-    } catch (err) {
-        console.error(err.message);
-        process.exit(1);
-    }
-};
+connectDB();
 
 const importData = async () => {
     try {
         await Product.deleteMany();
-        await Order.deleteMany();
-        await Cart.deleteMany();
-        
-        const products = generateProducts(50);
-        console.log('Generated 50 new products...');
+        await User.deleteMany();
 
-        await Product.insertMany(products);
+        const createdUsers = await User.insertMany(users);
+        const adminUser = createdUsers[0]._id; // First user is the admin
+
+        const sampleProducts = generateProducts(50).map(product => {
+            return { ...product, user: adminUser };
+        });
+
+        await Product.insertMany(sampleProducts);
 
         console.log('Data Imported!');
         process.exit();
     } catch (error) {
-        console.error(`Error: ${error}`);
+        console.error(`Error: ${error.message}`);
         process.exit(1);
     }
 };
@@ -43,21 +34,18 @@ const importData = async () => {
 const destroyData = async () => {
     try {
         await Product.deleteMany();
-        await Order.deleteMany();
-        await Cart.deleteMany();
+        await User.deleteMany();
 
         console.log('Data Destroyed!');
         process.exit();
     } catch (error) {
-        console.error(`Error: ${error}`);
+        console.error(`Error: ${error.message}`);
         process.exit(1);
     }
 };
 
-connectDB().then(() => {
-    if (process.argv[2] === '-d') {
-        destroyData();
-    } else {
-        importData();
-    }
-});
+if (process.argv[2] === '-d') {
+    destroyData();
+} else {
+    importData();
+}

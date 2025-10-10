@@ -1,32 +1,33 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const CartItemSchema = new mongoose.Schema({
+const cartItemSchema = new mongoose.Schema({
     productId: {
-        type: Number, // Matching the ID type from Fake Store API
-        required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+        required: true
     },
-    title: String,
-    price: Number,
-    image: String,
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, required: true },
     quantity: {
         type: Number,
         required: true,
         min: 1,
-        default: 1,
-    },
+        default: 1
+    }
 });
 
-
-const CartSchema = new mongoose.Schema({
+const cartSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
         required: true,
-        unique: true
+        ref: 'User'
     },
-    items: [CartItemSchema],
+    items: [cartItemSchema]
 }, {
     timestamps: true
 });
 
-module.exports = mongoose.model('Cart', CartSchema);
+const Cart = mongoose.model('Cart', cartSchema);
+
+export default Cart;
