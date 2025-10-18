@@ -49,7 +49,9 @@ const Navbar = () => {
                                         {user.isAdmin && (
                                             <>
                                                 <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
-                                                <Link to="/admin/productlist" onClick={closeDropdown} className="w-full text-left block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">Manage Products</Link>
+                                                <Link to="/admin/dashboard" onClick={closeDropdown} className="w-full text-left block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold">
+                                            Admin Dashboard
+                                        </Link>
                                             </>
                                         )}
 

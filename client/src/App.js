@@ -15,6 +15,8 @@ import OrderHistoryPage from './pages/OrderHistoryPage';
 import WishlistPage from './pages/WishlistPage';
 import ProductListPage from './pages/admin/ProductListPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
+import UserListPage from './pages/admin/UserListPage';
+import DashboardPage from './pages/admin/DashboardPage';
 
 const AuthRedirector = () => {
     const { user } = useApp();
@@ -51,9 +53,11 @@ function App() {
                             <Route path="/wishlist" element={<WishlistPage />} />
 
                             {/* Admin Routes */}
-                            <Route path="" element={<AdminProtectedRoute />}>
-                                <Route path="/admin/productlist" element={<ProductListPage />} />
-                                <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
+                            <Route path="/admin" element={<AdminProtectedRoute />}>
+                                <Route path="dashboard" element={<DashboardPage />} />
+                                <Route path="productlist" element={<ProductListPage />} />
+                                <Route path="product/:id/edit" element={<ProductEditPage />} />
+                                <Route path="userlist" element={<UserListPage />} />
                             </Route>
                         </Routes>
                     </main>

@@ -7,37 +7,57 @@ import { protect, admin } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // --- PUBLIC ROUTES ---
-
-// @desc    Fetch paginated products
-// @route   GET /api/products
 router.get('/', asyncHandler(async (req, res) => {
     const pageSize = 8;
     const page = Number(req.query.page) || 1;
-    const keyword = req.query.search ? { title: { $regex: req.query.search, $options: 'i' } } : {};
-    const categoryFilter = req.query.category && req.query.category !== 'all' ? { category: req.query.category } : {};
+
+    const keyword = req.query.search
+        ? { title: { $regex: req.query.search, $options: 'i' } }
+        : {};
+
+    const categoryFilter = req.query.category && req.query.category !== 'all'
+        ? { category: req.query.category }
+        : {};
+
+    // --- NEW: Sorting Logic ---
+    const sortOrder = req.query.sort || 'latest'; // Default to 'latest'
+    let sortQuery = {};
+    switch (sortOrder) {
+        case 'price-asc':
+            sortQuery = { price: 1 }; // 1 for ascending
+            break;
+        case 'price-desc':
+            sortQuery = { price: -1 }; // -1 for descending
+            break;
+        case 'rating':
+            sortQuery = { rating: -1 };
+            break;
+        case 'latest':
+        default:
+            sortQuery = { createdAt: -1 };
+            break;
+    }
+
     const query = { ...keyword, ...categoryFilter };
     const count = await Product.countDocuments(query);
-    const products = await Product.find(query).limit(pageSize).skip(pageSize * (page - 1));
+    
+    const products = await Product.find(query)
+        .sort(sortQuery) // <-- ADD THIS SORT METHOD
+        .limit(pageSize)
+        .skip(pageSize * (page - 1));
+
     res.json({ products, page, pages: Math.ceil(count / pageSize) });
 }));
 
-
-// --- ADMIN-ONLY ROUTES ---
-// IMPORTANT: More specific routes must be defined BEFORE dynamic routes like /:id
-
-// @desc    Get ALL products for admin (no pagination)
-// @route   GET /api/products/all
-// @access  Private/Admin
+// (The rest of your product routes file remains the same)
+// ... all other GET, POST, PUT, DELETE routes ...
+// --- ADMIN-ONLY ROUTES (must be before /:id) ---
 router.get('/all', protect, admin, asyncHandler(async (req, res) => {
     const products = await Product.find({}).sort({ createdAt: -1 });
     res.json(products);
 }));
 
-
 // --- DYNAMIC PUBLIC ROUTES ---
-
-// @desc    Fetch single product by ID
-// @route   GET /api/products/:id
 router.get('/:id', asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         res.status(404); throw new Error('Product not found');
@@ -46,8 +66,6 @@ router.get('/:id', asyncHandler(async (req, res) => {
     if (product) { res.json(product); } else { res.status(404); throw new Error('Product not found'); }
 }));
 
-// @desc    Get related products
-// @route   GET /api/products/:id/related
 router.get('/:id/related', asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         res.status(404); throw new Error('Product not found');
@@ -58,48 +76,47 @@ router.get('/:id/related', asyncHandler(async (req, res) => {
     res.json(relatedProducts);
 }));
 
+// --- REVIEW ROUTE ---
+router.post('/:id/reviews', protect, asyncHandler(async (req, res) => {
+    const { rating, comment } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (product) {
+        const alreadyReviewed = product.reviews.find((r) => r.user.toString() === req.user._id.toString());
+        if (alreadyReviewed) {
+            res.status(400); throw new Error('Product already reviewed');
+        }
+        const review = { name: req.user.name, rating: Number(rating), comment, user: req.user._id, };
+        product.reviews.push(review);
+        product.numReviews = product.reviews.length;
+        product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+        await product.save();
+        res.status(201).json({ message: 'Review added' });
+    } else {
+        res.status(404); throw new Error('Product not found');
+    }
+}));
 
-// --- MORE ADMIN-ONLY ROUTES ---
-
-// @desc    Create a product
-// @route   POST /api/products
-// @access  Private/Admin
+// --- ADMIN-ONLY CUD ROUTES ---
 router.post('/', protect, admin, asyncHandler(async (req, res) => {
     const product = new Product({
-        title: 'Sample name',
-        price: 0,
-        user: req.user._id,
-        image: '/images/sample.jpg',
-        category: 'Sample category',
-        description: 'Sample description',
+        title: 'Sample name', price: 0, user: req.user._id, image: '/images/sample.jpg', category: 'Sample category', description: 'Sample description', numReviews: 0, rating: 0
     });
     const createdProduct = await product.save();
     res.status(201).json(createdProduct);
 }));
 
-// @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Private/Admin
 router.put('/:id', protect, admin, asyncHandler(async (req, res) => {
     const { title, price, description, image, category } = req.body;
     const product = await Product.findById(req.params.id);
     if (product) {
-        product.title = title;
-        product.price = price;
-        product.description = description;
-        product.image = image;
-        product.category = category;
+        product.title = title; product.price = price; product.description = description; product.image = image; product.category = category;
         const updatedProduct = await product.save();
         res.json(updatedProduct);
     } else {
-        res.status(404);
-        throw new Error('Product not found');
+        res.status(404); throw new Error('Product not found');
     }
 }));
 
-// @desc    Delete a product
-// @route   DELETE /api/products/:id
-// @access  Private/Admin
 router.delete('/:id', protect, admin, asyncHandler(async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (product) {

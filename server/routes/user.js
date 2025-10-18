@@ -1,6 +1,6 @@
 import express from 'express';
 import asyncHandler from 'express-async-handler';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, admin } from '../middleware/authMiddleware.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 import jwt from 'jsonwebtoken';
@@ -97,5 +97,53 @@ router.delete('/wishlist/:productId', protect, asyncHandler(async (req, res) => 
     }
 }));
 
+
+// --- NEW ADMIN-ONLY ROUTES ---
+
+// @desc    Get all users
+// @route   GET /api/user
+// @access  Private/Admin
+router.get('/', protect, admin, asyncHandler(async (req, res) => {
+    const users = await User.find({}).select('-password');
+    res.json(users);
+}));
+
+// @desc    Delete a user
+// @route   DELETE /api/user/:id
+// @access  Private/Admin
+router.delete('/:id', protect, admin, asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+        if(user.isAdmin) {
+            res.status(400);
+            throw new Error('Cannot delete an admin user');
+        }
+        await user.deleteOne();
+        res.json({ message: 'User removed' });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+}));
+
+// @desc    Update user to be an admin
+// @route   PUT /api/user/:id/toggleadmin
+// @access  Private/Admin
+router.put('/:id/toggleadmin', protect, admin, asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+        user.isAdmin = !user.isAdmin;
+        const updatedUser = await user.save();
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin,
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+}));
 
 export default router;

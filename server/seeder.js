@@ -7,20 +7,26 @@ import Product from './models/Product.js';
 import connectDB from './config/db.js';
 
 dotenv.config();
-connectDB();
+await connectDB();
 
 const importData = async () => {
     try {
+        // Clear all previous data
         await Product.deleteMany();
         await User.deleteMany();
 
+        // Insert the users from your users.js file
         const createdUsers = await User.insertMany(users);
-        const adminUser = createdUsers[0]._id; // First user is the admin
+        
+        // Get the ID of the first user, who is the admin
+        const adminUser = createdUsers[0]._id;
 
+        // Generate 50 products and add the admin user's ID to each one
         const sampleProducts = generateProducts(50).map(product => {
             return { ...product, user: adminUser };
         });
 
+        // Insert the new products into the database
         await Product.insertMany(sampleProducts);
 
         console.log('Data Imported!');
