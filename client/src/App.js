@@ -17,6 +17,7 @@ import ProductListPage from './pages/admin/ProductListPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
 import UserListPage from './pages/admin/UserListPage';
 import DashboardPage from './pages/admin/DashboardPage';
+import OrderListPage from './pages/admin/OrderListPage';
 
 const AuthRedirector = () => {
     const { user } = useApp();
@@ -58,6 +59,7 @@ function App() {
                                 <Route path="productlist" element={<ProductListPage />} />
                                 <Route path="product/:id/edit" element={<ProductEditPage />} />
                                 <Route path="userlist" element={<UserListPage />} />
+                                <Route path="orderlist" element={<OrderListPage />} />
                             </Route>
                         </Routes>
                     </main>
