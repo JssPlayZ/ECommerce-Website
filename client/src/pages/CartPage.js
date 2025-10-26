@@ -1,20 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useApp } from '../context/AppContext'; // Corrected: useApp hook
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/helpers';
 import { Spinner } from '../components/UI';
 
 const CartPage = () => {
-    const { cart, removeFromCart, loading, handleCheckout } = useApp(); // Corrected: useApp hook
-    
+    const { cart, removeFromCart, loading, handleCheckout } = useApp();
+    const navigate = useNavigate(); // Get the navigate function
+
     const onCheckout = async () => {
-        const success = await handleCheckout();
-        // Navigation is now handled by React Router's Link/useNavigate, so this logic can be simpler
+        // Just call handleCheckout and navigate if it succeeds
+        const checkoutSuccess = await handleCheckout();
+        if (checkoutSuccess) {
+            navigate('/orders'); // Navigate after successful checkout
+        }
     };
 
     if (loading) return <div className="py-20"><Spinner /></div>;
     const subtotal = cart.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
-    
+
     return (
         <div className="container mx-auto p-4 md:p-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-4xl mx-auto border dark:border-slate-700">
@@ -22,7 +26,7 @@ const CartPage = () => {
                 {cart.items.length === 0 ? (
                     <div className="text-center py-10">
                         <p className="text-slate-500 dark:text-slate-400 mb-4">Your cart is currently empty. Time to start shopping!</p>
-                        <Link 
+                        <Link
                             to="/"
                             className="bg-slate-800 text-white px-6 py-2 rounded-md hover:bg-slate-700 dark:bg-amber-500 dark:text-slate-900 dark:hover:bg-amber-600 transition active:scale-95 font-bold"
                         >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import axios from 'axios';
 import { useApp } from '../../context/AppContext';
 import { API_URL } from '../../utils/helpers';
@@ -9,7 +9,9 @@ const UserListPage = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchUsers = async () => {
+    // Wrap fetchUsers in useCallback
+    const fetchUsers = useCallback(async () => {
+        if (!user || !user.isAdmin) return; // Guard clause
         setLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -20,26 +22,21 @@ const UserListPage = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    // We need a stable reference for useEffect
-    const stableShowToast = React.useCallback(showToast, []);
+    }, [user, showToast]); // Add dependencies
 
     useEffect(() => {
-        if (user && user.isAdmin) {
-            fetchUsers();
-        }
-    }, [user]);
+       fetchUsers();
+    }, [fetchUsers]); // Depend on the stable fetchUsers function
 
     const deleteHandler = async (id) => {
         if (window.confirm('Are you sure you want to delete this user? This cannot be undone.')) {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 await axios.delete(`${API_URL}/user/${id}`, config);
-                stableShowToast('User deleted successfully', 'success');
+                showToast('User deleted successfully', 'success');
                 fetchUsers(); // Re-fetch users after deletion
             } catch (error) {
-                stableShowToast(error.response?.data?.message || 'User deletion failed', 'error');
+                showToast(error.response?.data?.message || 'User deletion failed', 'error');
             }
         }
     };
@@ -49,10 +46,10 @@ const UserListPage = () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 await axios.put(`${API_URL}/user/${id}/toggleadmin`, {}, config);
-                stableShowToast('User admin status updated', 'success');
+                showToast('User admin status updated', 'success');
                 fetchUsers(); // Re-fetch users to show updated status
             } catch (error) {
-                stableShowToast(error.response?.data?.message || 'Failed to update admin status', 'error');
+                showToast(error.response?.data?.message || 'Failed to update admin status', 'error');
             }
         }
     };
@@ -87,7 +84,7 @@ const UserListPage = () => {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 flex gap-4">
-                                    <button onClick={() => toggleAdminHandler(u._id)} className="text-amber-500 hover:underline font-bold" disabled={u._id === user._id}>Toggle Admin</button>
+                                    <button onClick={() => toggleAdminHandler(u._id)} className="text-amber-500 hover:underline font-bold" disabled={u._id === user?._id}>Toggle Admin</button>
                                     <button onClick={() => deleteHandler(u._id)} className="text-red-500 hover:underline font-bold" disabled={u.isAdmin}>Delete</button>
                                 </td>
                             </tr>

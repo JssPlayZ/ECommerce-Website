@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import axios from 'axios';
 import { useApp } from '../../context/AppContext';
 import { API_URL, formatCurrency } from '../../utils/helpers';
@@ -9,7 +9,9 @@ const OrderListPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchOrders = async () => {
+    // Wrap fetchOrders in useCallback
+    const fetchOrders = useCallback(async () => {
+        if (!user || !user.isAdmin) return; // Guard clause
         setLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -20,13 +22,11 @@ const OrderListPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, showToast]); // Add dependencies
 
     useEffect(() => {
-        if (user && user.isAdmin) {
-            fetchOrders();
-        }
-    }, [user]);
+        fetchOrders();
+    }, [fetchOrders]); // Now useEffect depends on the stable fetchOrders function
 
     const markDeliveredHandler = async (orderId) => {
         if (window.confirm('Are you sure you want to mark this order as delivered?')) {

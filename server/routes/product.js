@@ -8,31 +8,30 @@ const router = express.Router();
 
 // --- PUBLIC ROUTES ---
 router.get('/', asyncHandler(async (req, res) => {
-    // --- UPDATED: Get pageSize from query or default to 8 ---
-    const pageSize = Number(req.query.limit) || 8; 
+    const pageSize = Number(req.query.limit) || 8;
     const page = Number(req.query.page) || 1;
 
     const keyword = req.query.search ? { title: { $regex: req.query.search, $options: 'i' } } : {};
     const categoryFilter = req.query.category && req.query.category !== 'all' ? { category: req.query.category } : {};
 
-    const sortOrder = req.query.sort || 'latest'; 
+    const sortOrder = req.query.sort || 'latest';
     let sortQuery = {};
     switch (sortOrder) {
-        case 'price-asc': sortQuery = { price: 1 }; break;
-        case 'price-desc': sortQuery = { price: -1 }; break;
-        case 'rating': sortQuery = { rating: -1 }; break;
-        case 'latest': default: sortQuery = { createdAt: -1 }; break;
+        case 'price-asc': sortQuery = { price: 1, _id: 1 }; break; // Added _id secondary sort
+        case 'price-desc': sortQuery = { price: -1, _id: 1 }; break;// Added _id secondary sort
+        case 'rating': sortQuery = { rating: -1, _id: 1 }; break; // Added _id secondary sort
+        case 'latest': default: sortQuery = { createdAt: -1, _id: 1 }; break; // Added _id secondary sort
     }
 
     const query = { ...keyword, ...categoryFilter };
     const count = await Product.countDocuments(query);
-    
+
     const products = await Product.find(query)
-        .sort(sortQuery)
-        .limit(pageSize) // Use the dynamic pageSize
+        .sort(sortQuery) // Use the combined sort query
+        .limit(pageSize)
         .skip(pageSize * (page - 1));
 
-    res.json({ products, page, pages: Math.ceil(count / pageSize), pageSize }); // Send pageSize back
+    res.json({ products, page, pages: Math.ceil(count / pageSize), pageSize });
 }));
 
 // ... all other GET, POST, PUT, DELETE routes ...
