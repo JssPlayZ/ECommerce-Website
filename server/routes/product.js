@@ -8,48 +8,33 @@ const router = express.Router();
 
 // --- PUBLIC ROUTES ---
 router.get('/', asyncHandler(async (req, res) => {
-    const pageSize = 8;
+    // --- UPDATED: Get pageSize from query or default to 8 ---
+    const pageSize = Number(req.query.limit) || 8; 
     const page = Number(req.query.page) || 1;
 
-    const keyword = req.query.search
-        ? { title: { $regex: req.query.search, $options: 'i' } }
-        : {};
+    const keyword = req.query.search ? { title: { $regex: req.query.search, $options: 'i' } } : {};
+    const categoryFilter = req.query.category && req.query.category !== 'all' ? { category: req.query.category } : {};
 
-    const categoryFilter = req.query.category && req.query.category !== 'all'
-        ? { category: req.query.category }
-        : {};
-
-    // --- NEW: Sorting Logic ---
-    const sortOrder = req.query.sort || 'latest'; // Default to 'latest'
+    const sortOrder = req.query.sort || 'latest'; 
     let sortQuery = {};
     switch (sortOrder) {
-        case 'price-asc':
-            sortQuery = { price: 1 }; // 1 for ascending
-            break;
-        case 'price-desc':
-            sortQuery = { price: -1 }; // -1 for descending
-            break;
-        case 'rating':
-            sortQuery = { rating: -1 };
-            break;
-        case 'latest':
-        default:
-            sortQuery = { createdAt: -1 };
-            break;
+        case 'price-asc': sortQuery = { price: 1 }; break;
+        case 'price-desc': sortQuery = { price: -1 }; break;
+        case 'rating': sortQuery = { rating: -1 }; break;
+        case 'latest': default: sortQuery = { createdAt: -1 }; break;
     }
 
     const query = { ...keyword, ...categoryFilter };
     const count = await Product.countDocuments(query);
     
     const products = await Product.find(query)
-        .sort(sortQuery) // <-- ADD THIS SORT METHOD
-        .limit(pageSize)
+        .sort(sortQuery)
+        .limit(pageSize) // Use the dynamic pageSize
         .skip(pageSize * (page - 1));
 
-    res.json({ products, page, pages: Math.ceil(count / pageSize) });
+    res.json({ products, page, pages: Math.ceil(count / pageSize), pageSize }); // Send pageSize back
 }));
 
-// (The rest of your product routes file remains the same)
 // ... all other GET, POST, PUT, DELETE routes ...
 // --- ADMIN-ONLY ROUTES (must be before /:id) ---
 router.get('/all', protect, admin, asyncHandler(async (req, res) => {
