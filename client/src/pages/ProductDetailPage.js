@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
-import { API_URL, formatCurrency } from '../utils/helpers';
+import { API_URL, formatCurrency, SERVER_URL } from '../utils/helpers';
 import { Spinner } from '../components/UI';
 import ProductCard from '../components/ProductCard';
 
@@ -88,6 +88,11 @@ const ProductDetailPage = () => {
     if (error) return <div className="text-center mt-10 text-red-500">{error}</div>;
     if (!product) return null;
 
+    // Check if image is an uploaded path or an external URL
+    const imageUrl = product.image.startsWith('/uploads') 
+        ? `${SERVER_URL}${product.image}` 
+        : product.image;
+
     return (
         <div className="container mx-auto p-4 md:p-8">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg border dark:border-slate-700 mb-8">
@@ -96,7 +101,7 @@ const ProductDetailPage = () => {
                 </Link>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                     <div className="flex items-center justify-center p-4 bg-white rounded-lg aspect-square">
-                        <img src={product.image} alt={product.title} className="max-h-full object-contain" />
+                        <img src={imageUrl} alt={product.title} className="max-h-full object-contain" />
                     </div>
                     <div>
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{product.title}</h2>

@@ -3,6 +3,8 @@ import asyncHandler from 'express-async-handler';
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 const router = express.Router();
 
@@ -104,6 +106,24 @@ router.put('/:id', protect, admin, asyncHandler(async (req, res) => {
 router.delete('/:id', protect, admin, asyncHandler(async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (product) {
+        const imagePath = product.image;
+
+        // Check if the image path points to a local upload
+        if (imagePath && imagePath.startsWith('/uploads/')) {
+            const __dirname = path.resolve();
+            const filePath = path.join(__dirname, imagePath);
+        
+            try {
+                // Try to delete the file
+                await fs.unlink(filePath);
+                console.log(`Successfully deleted image: ${filePath}`);
+            } catch (err) {
+                // Log an error if the file doesn't exist, but don't stop the process
+                console.error(`Failed to delete image: ${filePath}. Error: ${err.message}`);
+            }
+        }
+
+        // Proceed to delete the product from the database
         await product.deleteOne();
         res.json({ message: 'Product removed' });
     } else {

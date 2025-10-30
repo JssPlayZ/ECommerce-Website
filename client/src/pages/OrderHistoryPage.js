@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useApp } from '../context/AppContext'; // Corrected: useApp hook
-import { API_URL, formatCurrency } from '../utils/helpers';
+import { useApp } from '../context/AppContext';
+import { API_URL, formatCurrency, SERVER_URL } from '../utils/helpers';
 import { Spinner } from '../components/UI';
 
 const OrderHistoryPage = () => {
-    const { user } = useApp(); // Corrected: useApp hook
+    const { user } = useApp();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,13 +40,19 @@ const OrderHistoryPage = () => {
                                     <p className="font-bold text-lg text-slate-900 dark:text-white">Total: {formatCurrency(order.totalPrice)}</p>
                                 </div>
                                 <div className="space-y-3">
-                                    {order.products.map(product => (
-                                        <div key={product.productId} className="flex items-center space-x-4 text-sm">
-                                            <img src={product.image} alt={product.title} className="w-12 h-12 object-contain rounded bg-white p-1 border dark:border-slate-600" />
-                                            <p className="flex-grow text-slate-700 dark:text-slate-300">{product.title} <span className="text-slate-500 dark:text-slate-400">(x{product.quantity})</span></p>
-                                            <p className="font-medium text-slate-800 dark:text-slate-200">{formatCurrency(product.price * product.quantity)}</p>
-                                        </div>
-                                    ))}
+                                    {order.products.map(product => {
+                                        const imageUrl = product.image.startsWith('/uploads') 
+                                            ? `${SERVER_URL}${product.image}` 
+                                            : product.image;
+                                        
+                                        return ( 
+                                            <div key={product.productId} className="flex items-center space-x-4 text-sm">
+                                                <img src={imageUrl} alt={product.title} className="w-12 h-12 object-contain rounded bg-white p-1 border dark:border-slate-600" />
+                                                <p className="flex-grow text-slate-700 dark:text-slate-300">{product.title} <span className="text-slate-500 dark:text-slate-400">(x{product.quantity})</span></p>
+                                                <p className="font-medium text-slate-800 dark:text-slate-200">{formatCurrency(product.price * product.quantity)}</p>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}

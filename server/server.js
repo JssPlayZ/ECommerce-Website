@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
 import connectDB from './config/db.js';
 
 // Route files
@@ -10,6 +11,7 @@ import userRoutes from './routes/user.js';
 import cartRoutes from './routes/cart.js';
 import orderRoutes from './routes/order.js';
 import adminRoutes from './routes/admin.js';
+import uploadRoutes from './routes/upload.js'
 
 // Error Middleware
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -28,6 +30,11 @@ app.use('/api/user', userRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// This makes images in the 'uploads' folder accessible via the web
+const __dirname = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
 app.use(notFound);
 app.use(errorHandler);

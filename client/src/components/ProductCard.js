@@ -1,11 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, SERVER_URL } from '../utils/helpers';
 
 const ProductCard = ({ product }) => {
     const { addToCart, wishlist, toggleWishlist, user } = useApp();
     const isWishlisted = wishlist.some(item => item._id === product._id);
+
+    // Check if image is an uploaded path or an external URL
+    const imageUrl = product.image.startsWith('/uploads') 
+        ? `${SERVER_URL}${product.image}` 
+        : product.image;
 
     const handleWishlistClick = (e) => {
         e.preventDefault(); // Prevent link navigation
@@ -15,7 +20,6 @@ const ProductCard = ({ product }) => {
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden flex flex-col transition-all duration-300 group border dark:border-slate-700 hover:shadow-lg hover:-translate-y-1 relative">
-            {/* NEW: Wishlist button */}
             {user && (
                  <button 
                     onClick={handleWishlistClick}
@@ -29,7 +33,7 @@ const ProductCard = ({ product }) => {
             )}
            
             <Link to={`/product/${product._id}`} className="h-56 w-full flex items-center justify-center p-4 bg-white cursor-pointer">
-               <img src={product.image} alt={product.title} className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+               <img src={imageUrl} alt={product.title} className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
             </Link>
             <div className="p-4 flex flex-col flex-grow">
                 <Link to={`/product/${product._id}`}>

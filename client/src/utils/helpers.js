@@ -1,5 +1,6 @@
 export const API_URL = 'http://localhost:5001/api';
-export const INR_CONVERSION_RATE = 1; // Set your desired rate
+export const SERVER_URL = 'http://localhost:5001';
+export const INR_CONVERSION_RATE = 1;
 
 export const formatCurrency = (priceInUSD) => {
     const priceInINR = priceInUSD * INR_CONVERSION_RATE;
