@@ -4,6 +4,7 @@ import { protect, admin } from '../middleware/authMiddleware.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
+import { scrapeAmazon } from '../utils/scraperService.js';
 
 const router = express.Router();
 
@@ -97,6 +98,52 @@ router.put('/orders/:id/deliver', protect, admin, asyncHandler(async (req, res) 
         res.status(404);
         throw new Error('Order not found');
     }
+}));
+
+// @desc    Scrape products from Amazon
+// @route   POST /api/admin/scrape
+// @access  Private/Admin
+router.post('/scrape', protect, admin, asyncHandler(async (req, res) => {
+    const { searchTerm } = req.body;
+    if (!searchTerm) {
+        res.status(400);
+        throw new Error('No search term provided');
+    }
+    try {
+        const products = await scrapeAmazon(searchTerm);
+        res.json(products);
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+}));
+
+// @desc    Import a scraped product
+// @route   POST /api/admin/import
+// @access  Private/Admin
+router.post('/import', protect, admin, asyncHandler(async (req, res) => {
+    const { title, price, description, image, category } = req.body;
+
+    // Check for duplicates
+    const productExists = await Product.findOne({ title });
+    if (productExists) {
+        res.status(400);
+        throw new Error('A product with this title already exists');
+    }
+
+    const product = new Product({
+        title,
+        price,
+        description,
+        image,
+        category,
+        user: req.user._id, // Assign the logged-in admin as the creator
+        numReviews: 0,
+        rating: 0,
+    });
+
+    const createdProduct = await product.save();
+    res.status(201).json(createdProduct);
 }));
 
 export default router;
