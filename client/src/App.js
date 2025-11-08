@@ -19,6 +19,7 @@ import UserListPage from './pages/admin/UserListPage';
 import DashboardPage from './pages/admin/DashboardPage';
 import OrderListPage from './pages/admin/OrderListPage';
 import ImporterPage from './pages/admin/ImporterPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 const AuthRedirector = () => {
     const { user } = useApp();
@@ -53,6 +54,9 @@ function App() {
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/orders" element={<OrderHistoryPage />} />
                             <Route path="/wishlist" element={<WishlistPage />} />
+
+                            {/* Google Auth Callback Route*/}
+                            <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
                             {/* Admin Routes */}
                             <Route path="/admin" element={<AdminProtectedRoute />}>

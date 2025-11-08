@@ -2,7 +2,10 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import passport from 'passport';
+import session from 'express-session';
 import connectDB from './config/db.js';
+import passportConfig from './config/passport.js';
 
 // Route files
 import productRoutes from './routes/product.js';
@@ -18,10 +21,22 @@ import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
 connectDB();
+passportConfig(passport);
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Mount Routers
 app.use('/api/products', productRoutes);

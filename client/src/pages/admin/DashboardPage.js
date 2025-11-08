@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useApp } from '../../context/AppContext';
 import { API_URL, formatCurrency } from '../../utils/helpers';
 import { Spinner } from '../../components/UI';
-// --- NEW: Import Recharts components ---
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Icon Components for Stat Cards
@@ -17,7 +16,7 @@ const RevenueIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-8
 const DashboardPage = () => {
     const { user, showToast } = useApp();
     const [stats, setStats] = useState(null);
-    const [salesData, setSalesData] = useState([]); // <-- NEW state for chart data
+    const [salesData, setSalesData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -107,7 +106,7 @@ const DashboardPage = () => {
                                 contentStyle={{ backgroundColor: 'rgba(51, 65, 85, 0.9)', border: 'none', borderRadius: '0.5rem', color: '#fff' }}
                                 itemStyle={{ color: '#ddd' }}
                                 labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                                formatter={customTooltipFormatter} // <-- Use custom formatter
+                                formatter={customTooltipFormatter} 
                             />
                             <Legend />
                             <Line

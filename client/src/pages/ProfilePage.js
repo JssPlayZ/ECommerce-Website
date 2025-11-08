@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useApp } from '../context/AppContext'; // Corrected: useApp hook
+import { useApp } from '../context/AppContext';
 import { API_URL } from '../utils/helpers';
 import { Spinner } from '../components/UI';
 
 const ProfilePage = () => {
-    const { user, showToast, updateUser } = useApp(); // Corrected: useApp hook
+    const { user, showToast, updateUser } = useApp();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

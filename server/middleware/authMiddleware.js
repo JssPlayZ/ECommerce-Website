@@ -13,7 +13,6 @@ const protect = asyncHandler(async (req, res, next) => {
             // Find the user by the ID from the token
             const user = await User.findById(decoded.id).select('-password');
 
-            // --- THIS IS THE CRUCIAL FIX ---
             // If we found a user, attach it to the request and proceed.
             if (user) {
                 req.user = user;

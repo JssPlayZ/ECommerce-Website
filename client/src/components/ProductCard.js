@@ -13,8 +13,8 @@ const ProductCard = ({ product }) => {
         : product.image;
 
     const handleWishlistClick = (e) => {
-        e.preventDefault(); // Prevent link navigation
-        e.stopPropagation(); // Stop event from bubbling up to the main link
+        e.preventDefault();
+        e.stopPropagation();
         toggleWishlist(product._id);
     };
 

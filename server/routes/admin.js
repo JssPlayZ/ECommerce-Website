@@ -137,7 +137,7 @@ router.post('/import', protect, admin, asyncHandler(async (req, res) => {
         description,
         image,
         category,
-        user: req.user._id, // Assign the logged-in admin as the creator
+        user: req.user._id,
         numReviews: 0,
         rating: 0,
     });

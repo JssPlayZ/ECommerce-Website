@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react'; // Import useCallback
 import axios from 'axios';
 import { API_URL } from '../utils/helpers';
 
@@ -10,31 +10,13 @@ export const AppProvider = ({ children }) => {
     // States
     const [user, setUser] = useState(null);
     const [cart, setCart] = useState({ items: [] });
-    const [wishlist, setWishlist] = useState([]); // <-- NEW: Wishlist state
+    const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
     const [toasts, setToasts] = useState([]);
     const [isCartAnimating, setIsCartAnimating] = useState(false);
 
-    // Effects
-    useEffect(() => {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            const parsedInfo = JSON.parse(userInfo);
-            setUser(parsedInfo);
-            fetchCart(parsedInfo.token);
-            fetchWishlist(parsedInfo.token); // <-- NEW: Fetch wishlist on login
-        }
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-    
-    // Functions
-    const showToast = (message, type = 'info') => {
+    const showToast = useCallback((message, type = 'info') => {
         const id = Date.now();
         const newToast = { id, message, type, visible: true };
         setToasts(prev => [...prev, newToast]);
@@ -42,40 +24,57 @@ export const AppProvider = ({ children }) => {
             setToasts(prev => prev.map(t => t.id === id ? { ...t, visible: false } : t));
             setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 500);
         }, 3000);
-    };
+    }, []);
 
-    const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    const toggleTheme = useCallback(() => {
+        setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    }, []);
 
-    const login = (userData) => {
-        localStorage.setItem('userInfo', JSON.stringify(userData));
-        setUser(userData);
-        fetchCart(userData.token);
-        fetchWishlist(userData.token); // <-- NEW: Fetch wishlist on login
-    };
-
-    const logout = () => {
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('profilePicture');
-        setUser(null);
-        setCart({ items: [] });
-        setWishlist([]); // <-- NEW: Clear wishlist on logout
-    };
-    
-    const updateUser = (userData) => {
-        localStorage.setItem('userInfo', JSON.stringify(userData));
-        setUser(userData);
-    };
-
-    // --- Cart Functions ---
-    const fetchCart = async (token) => {
+    const fetchCart = useCallback(async (token) => {
         try {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const { data } = await axios.get(`${API_URL}/cart`, config);
             setCart(data);
-        } catch (error) { console.error("Failed to fetch cart", error); }
-    };
+        } catch (error) { 
+            console.error("Failed to fetch cart", error); 
+        }
+    }, []);
 
-    const addToCart = async (product) => {
+    const fetchWishlist = useCallback(async (token) => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const { data } = await axios.get(`${API_URL}/user/wishlist`, config);
+            setWishlist(data);
+        } catch (error) { 
+            console.error("Failed to fetch wishlist", error); 
+        }
+    }, []);
+
+    const login = useCallback(async (userData) => {
+        localStorage.setItem('userInfo', JSON.stringify(userData));
+        setUser(userData);
+        try {
+            await fetchCart(userData.token);
+            await fetchWishlist(userData.token);
+        } catch (error) {
+            console.error("Failed to fetch data on login", error);
+        }
+    }, [fetchCart, fetchWishlist]);
+
+    const logout = useCallback(() => {
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('profilePicture');
+        setUser(null);
+        setCart({ items: [] });
+        setWishlist([]);
+    }, []);
+    
+    const updateUser = useCallback((userData) => {
+        localStorage.setItem('userInfo', JSON.stringify(userData));
+        setUser(userData);
+    }, []);
+
+    const addToCart = useCallback(async (product) => {
         if (!user) { showToast('Please log in to add items.', 'error'); return; }
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -84,10 +83,13 @@ export const AppProvider = ({ children }) => {
             showToast(`${product.title} added to cart!`, 'success');
             setIsCartAnimating(true);
             setTimeout(() => setIsCartAnimating(false), 500);
-        } catch (error) { showToast('Failed to add to cart.', 'error'); }
-    };
+        } catch (error) { 
+            console.error("Add to cart error:", error.response?.data?.message || error.message);
+            showToast('Failed to add to cart.', 'error'); 
+        }
+    }, [user, showToast]);
 
-    const removeFromCart = async (productId) => {
+    const removeFromCart = useCallback(async (productId) => {
         if (!user) return;
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -95,9 +97,9 @@ export const AppProvider = ({ children }) => {
             setCart(data);
             showToast('Item removed from cart.', 'info');
         } catch (error) { showToast('Failed to remove item.', 'error'); }
-    };
+    }, [user, showToast]);
 
-    const handleCheckout = async () => {
+    const handleCheckout = useCallback(async () => {
         if (!user) return false;
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -106,18 +108,9 @@ export const AppProvider = ({ children }) => {
             showToast('Checkout successful!', 'success');
             return true;
         } catch (error) { showToast('Checkout failed.', 'error'); return false; }
-    };
+    }, [user, showToast]);
 
-    // --- NEW: Wishlist Functions ---
-    const fetchWishlist = async (token) => {
-        try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const { data } = await axios.get(`${API_URL}/user/wishlist`, config);
-            setWishlist(data);
-        } catch (error) { console.error("Failed to fetch wishlist", error); }
-    };
-
-    const toggleWishlist = async (productId) => {
+    const toggleWishlist = useCallback(async (productId) => {
         if (!user) { showToast('Please log in to manage your wishlist.', 'error'); return; }
         
         const isWishlisted = wishlist.some(item => item._id === productId);
@@ -136,8 +129,30 @@ export const AppProvider = ({ children }) => {
         } catch (error) {
             showToast('Failed to update wishlist.', 'error');
         }
-    };
+    }, [user, wishlist, showToast]);
 
-    const value = { user, cart, loading, login, logout, addToCart, removeFromCart, theme, toggleTheme, handleCheckout, toasts, isCartAnimating, showToast, updateUser, wishlist, toggleWishlist };
+
+    // --- Effects that run once on load ---
+    useEffect(() => {
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+            const parsedInfo = JSON.parse(userInfo);
+            setUser(parsedInfo);
+            fetchCart(parsedInfo.token);
+            fetchWishlist(parsedInfo.token);
+        }
+        setLoading(false);
+    }, [fetchCart, fetchWishlist]);
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+    
+    // Memoize the context value
+    const value = React.useMemo(() => ({
+        user, cart, loading, login, logout, addToCart, removeFromCart, theme, toggleTheme, handleCheckout, toasts, isCartAnimating, showToast, updateUser, wishlist, toggleWishlist
+    }), [user, cart, loading, login, logout, addToCart, removeFromCart, theme, toggleTheme, handleCheckout, toasts, isCartAnimating, showToast, updateUser, wishlist, toggleWishlist]);
+
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

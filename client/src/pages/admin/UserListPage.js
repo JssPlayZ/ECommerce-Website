@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useApp } from '../../context/AppContext';
 import { API_URL } from '../../utils/helpers';
@@ -9,9 +9,8 @@ const UserListPage = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Wrap fetchUsers in useCallback
     const fetchUsers = useCallback(async () => {
-        if (!user || !user.isAdmin) return; // Guard clause
+        if (!user || !user.isAdmin) return;
         setLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -26,7 +25,7 @@ const UserListPage = () => {
 
     useEffect(() => {
        fetchUsers();
-    }, [fetchUsers]); // Depend on the stable fetchUsers function
+    }, [fetchUsers]);
 
     const deleteHandler = async (id) => {
         if (window.confirm('Are you sure you want to delete this user? This cannot be undone.')) {
@@ -34,7 +33,7 @@ const UserListPage = () => {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 await axios.delete(`${API_URL}/user/${id}`, config);
                 showToast('User deleted successfully', 'success');
-                fetchUsers(); // Re-fetch users after deletion
+                fetchUsers();
             } catch (error) {
                 showToast(error.response?.data?.message || 'User deletion failed', 'error');
             }
@@ -47,7 +46,7 @@ const UserListPage = () => {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 await axios.put(`${API_URL}/user/${id}/toggleadmin`, {}, config);
                 showToast('User admin status updated', 'success');
-                fetchUsers(); // Re-fetch users to show updated status
+                fetchUsers();
             } catch (error) {
                 showToast(error.response?.data?.message || 'Failed to update admin status', 'error');
             }

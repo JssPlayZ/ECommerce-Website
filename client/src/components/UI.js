@@ -1,8 +1,8 @@
 import React from 'react';
-import { useApp } from '../context/AppContext'; // Corrected: useApp hook
+import { useApp } from '../context/AppContext'; 
 
 const ToastContainer = () => {
-    const { toasts } = useApp(); // Corrected: useApp hook
+    const { toasts } = useApp();
     return (
         <div className="fixed top-5 right-5 z-[100] space-y-2">
             {toasts.map(toast => <Toast key={toast.id} {...toast} />)}
@@ -25,7 +25,7 @@ const Pagination = ({ pages, currentPage, onPageChange }) => {
     if (pages <= 1) return null;
 
     const pageNumbers = [];
-    const maxPagesToShow = 5; // Max number of page buttons to show directly
+    const maxPagesToShow = 5;
     const halfMaxPages = Math.floor(maxPagesToShow / 2);
 
     let startPage = Math.max(1, currentPage - halfMaxPages);

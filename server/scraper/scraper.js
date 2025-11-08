@@ -79,7 +79,6 @@ const scrapeProducts = async () => {
                 const isSponsored = item.querySelector('.puis-label-popover-hover') || item.querySelector('a.s-link-style[href*="/sspa/click"]');
                 if (isSponsored) continue;
 
-                // --- THE FINAL, MOST GENERIC SELECTORS ---
                 const titleEl = item.querySelector('.a-size-medium.a-color-base.a-text-normal, .a-size-base-plus.a-color-base.a-text-normal');
                 const priceEl = item.querySelector('.a-price-whole');
                 const imageEl = item.querySelector('.s-image');

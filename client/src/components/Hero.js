@@ -1,7 +1,6 @@
 import React from 'react';
 
 const Hero = () => {
-    // Function to handle smooth scrolling
     const scrollToProducts = () => {
         const productSection = document.getElementById('products-section');
         if (productSection) {

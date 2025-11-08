@@ -32,7 +32,7 @@ export const scrapeAmazon = async (searchTerm) => {
     console.log(`🚀 Launching scraper for term: ${searchTerm}`);
     try {
         browser = await puppeteer.launch({
-            //headless: false, // Must run in headful mode to bypass security
+            //headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();

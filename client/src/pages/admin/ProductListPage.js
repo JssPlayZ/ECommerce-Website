@@ -15,7 +15,6 @@ const ProductListPage = () => {
         const fetchAllProducts = async () => {
             setLoading(true);
             try {
-                // CORRECTED: Call the new admin-only endpoint
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 const { data } = await axios.get(`${API_URL}/products/all`, config); 
                 setProducts(data);

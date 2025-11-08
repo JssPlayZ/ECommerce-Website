@@ -21,7 +21,6 @@ const categoryDetails = [
 
 const HomePage = () => {
     const [products, setProducts] = React.useState([]);
-    // Removed unused topRatedProducts state
     const [pages, setPages] = React.useState(1);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState('');
