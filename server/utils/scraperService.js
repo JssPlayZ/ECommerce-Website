@@ -39,8 +39,36 @@ export const scrapeAmazon = async (searchTerm) => {
         await page.setViewport({ width: 1920, height: 1080 });
 
         await page.goto('https://www.amazon.in/', { waitUntil: 'networkidle2', timeout: 90000 });
+
+        // await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            // Wait for either the results OR the CAPTCHA button
+            await Promise.race([
+                page.waitForSelector('div.s-result-item[data-asin]', { timeout: 10000 }),
+                page.waitForSelector('button.a-button-text[alt="Continue shopping"]', { timeout: 10000 })
+            ]);
+
+            // Check if the CAPTCHA button exists
+            const continueButton = await page.$('button.a-button-text[alt="Continue shopping"]');
+
+            if (continueButton) {
+                console.warn('🤖 Bot detection page found. Attempting to click "Continue shopping"...');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Short pause
+                await continueButton.click();
+
+                // Wait for the real results page to load after clicking
+                await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+                console.log('✅ Successfully bypassed CAPTCHA. Now loading products...');
+            } else {
+                console.log('✅ Product results found immediately.');
+            }
+
+        } catch (e) {
+            throw new Error('Could not find product results or CAPTCHA button. Amazon layout may have changed.');
+        }
+
         await page.type('#twotabsearchtextbox', searchTerm, { delay: 100 });
-        
+
         await Promise.all([
             page.keyboard.press('Enter'),
             page.waitForNavigation({ waitUntil: 'networkidle2' })
